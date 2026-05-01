@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&family=Raleway:wght@200&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     background: #0c0b0a;
     min-height: 100vh;
@@ -16,41 +15,35 @@
     justify-content: center;
     font-family: 'EB Garamond', serif;
     overflow: hidden;
-  }
-
- 
-  #bg {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .scene {
-    display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 40px;
-    position: relative;
-    z-index: 10;
+    gap: 36px;
   }
-
-  #flower {
-    display: block;
+  #bg { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  #bouquet { display: block; position: relative; z-index: 10; }
+  .glow {
+    position: fixed;
+    width: 400px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(200,168,75,0.07) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -55%);
+    pointer-events: none; z-index: 0;
+    animation: breathe 6s ease-in-out infinite;
   }
+  @keyframes breathe { 0%,100%{opacity:.5} 50%{opacity:1} }
 
   .text-wrap {
     text-align: center;
     max-width: 360px;
     padding: 0 20px;
     opacity: 0;
-    animation: fade-up 1.2s ease 2.4s forwards;
+    position: relative; z-index: 10;
+    animation: fade-up 1.2s ease 3.2s forwards;
   }
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-
   .title {
     font-style: italic;
     font-size: clamp(1.3rem, 4vw, 1.7rem);
@@ -59,285 +52,285 @@
     margin-bottom: 16px;
     line-height: 1.3;
   }
-  .rule {
-    width: 30px; height: 1px;
-    background: #5a4820;
-    margin: 0 auto 16px;
-  }
+  .rule { width: 30px; height: 1px; background: #5a4820; margin: 0 auto 16px; }
   .poem {
     font-style: italic;
     font-size: clamp(0.88rem, 2.5vw, 0.98rem);
-    color: #5e5040;
-    line-height: 2.1;
-    letter-spacing: 0.02em;
+    color: #5e5040; line-height: 2.1; letter-spacing: 0.02em;
   }
-  .poem strong {
-    color: #b89e60;
-    font-weight: 400;
-    font-style: normal;
-  }
+  .poem strong { color: #b89e60; font-weight: 400; font-style: normal; }
   .sig {
     margin-top: 20px;
-    font-family: 'Raleway', sans-serif;
-    font-weight: 200;
-    font-size: 0.58rem;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    color: #4a3818;
-  }
-
-  .glow {
-    position: fixed;
-    width: 320px; height: 320px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(200,168,75,0.08) 0%, transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -62%);
-    pointer-events: none;
-    z-index: 0;
-    animation: breathe 6s ease-in-out infinite;
-  }
-  @keyframes breathe {
-    0%,100% { opacity: 0.5; }
-    50% { opacity: 1; }
+    font-family: 'Raleway', sans-serif; font-weight: 200;
+    font-size: 0.58rem; letter-spacing: 0.4em;
+    text-transform: uppercase; color: #4a3818;
   }
 </style>
 </head>
 <body>
-
 <div class="glow"></div>
 <canvas id="bg"></canvas>
-
-<div class="scene">
-  <canvas id="flower" width="220" height="300"></canvas>
-  <div class="text-wrap">
-    <div class="title">eres mi sol más cercano</div>
-    <div class="rule"></div>
-    <p class="poem">
-      como esta flor que no pide permiso<br>
-      para abrirse —<br>
-      <strong>así te quiero.</strong><br><br>
-      sin ruido. sin prisa.<br>
-      con toda la luz<br>
-      <strong>que me diste sin saber.</strong>
-    </p>
-    <p class="sig">— siempre —</p>
-  </div>
+<canvas id="bouquet" width="480" height="420"></canvas>
+<div class="text-wrap">
+  <div class="title">eres mi sol más cercano</div>
+  <div class="rule"></div>
+  <p class="poem">
+    como estas flores que no piden permiso<br>
+    para abrirse —<br>
+    <strong>así te quiero.</strong><br><br>
+    sin ruido. sin prisa.<br>
+    con toda la luz<br>
+    <strong>que me diste sin saber.</strong>
+  </p>
+  <p class="sig">— siempre —</p>
 </div>
 
 <script>
-// ─── FLOWER CANVAS ───────────────────────────────────────────────
-const fc = document.getElementById('flower');
-const ctx = fc.getContext('2d');
 
-const CX = 110, CY = 130;
-const STEM_BOT = 295;
-const GOLD = '#c8a84b', GOLD_LIGHT = '#e8cc80', GOLD_DARK = '#8a6a20';
-const STEM_COLOR = '#2a3a10';
-const NUM_PETALS = 12, PETAL_LENGTH = 48, PETAL_WIDTH = 16;
-const BLOOM_DURATION = 2000;
-
-let flowerStart = null;
-let flowerProgress = 0;
-
-function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-
-function drawStem(p) {
-  const top = STEM_BOT - p * (STEM_BOT - CY);
-  ctx.save();
-  ctx.strokeStyle = STEM_COLOR;
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(CX, STEM_BOT);
-  ctx.lineTo(CX, top);
-  ctx.stroke();
-
-  if (p > 0.4) {
-    const lp = Math.min(1, (p - 0.4) / 0.3);
-    ctx.globalAlpha = lp;
-    ctx.save();
-    ctx.translate(CX, STEM_BOT - 80);
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.bezierCurveTo(-28*lp,-10*lp,-38*lp,-22*lp,-20*lp,-30*lp);
-    ctx.bezierCurveTo(-10*lp,-20*lp,-5*lp,-10*lp,0,0);
-    ctx.fillStyle = STEM_COLOR; ctx.fill();
-    ctx.restore();
-    ctx.save();
-    ctx.translate(CX, STEM_BOT - 110);
-    ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.bezierCurveTo(28*lp,-8*lp,40*lp,-20*lp,22*lp,-28*lp);
-    ctx.bezierCurveTo(10*lp,-18*lp,4*lp,-8*lp,0,0);
-    ctx.fillStyle = STEM_COLOR; ctx.fill();
-    ctx.restore();
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-}
-
-function drawPetal(angle, petalProgress) {
-  if (petalProgress <= 0) return;
-  const p = easeOut(petalProgress);
-  const len = PETAL_LENGTH * p;
-  const wid = PETAL_WIDTH * p;
-  ctx.save();
-  ctx.translate(CX, CY);
-  ctx.rotate(angle);
-  ctx.beginPath();
-  ctx.ellipse(0, -len * 0.55, wid * 0.5, len * 0.5, 0, 0, Math.PI * 2);
-  const grad = ctx.createLinearGradient(0, 0, 0, -len);
-  grad.addColorStop(0, GOLD_DARK);
-  grad.addColorStop(0.4, GOLD);
-  grad.addColorStop(1, GOLD_LIGHT);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.strokeStyle = GOLD_DARK;
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(0, -len * 0.9);
-  ctx.strokeStyle = 'rgba(200,168,75,0.2)';
-  ctx.lineWidth = 0.6;
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawCenter(p) {
-  if (p <= 0) return;
-  ctx.save();
-  ctx.translate(CX, CY);
-  ctx.beginPath();
-  ctx.arc(0, 0, 15 * p, 0, Math.PI * 2);
-  const grad = ctx.createRadialGradient(0,0,0,0,0,15*p);
-  grad.addColorStop(0, '#3a2a08');
-  grad.addColorStop(0.6, '#1e1406');
-  grad.addColorStop(1, '#0c0b0a');
-  ctx.fillStyle = grad; ctx.fill();
-  ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8; ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, 8 * p, 0, Math.PI * 2);
-  ctx.strokeStyle = GOLD_DARK; ctx.lineWidth = 0.5; ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, 2 * p, 0, Math.PI * 2);
-  ctx.fillStyle = GOLD; ctx.globalAlpha = 0.6; ctx.fill();
-  ctx.restore();
-}
-
-let swayTime = 0;
-
-function drawFlower(ts) {
-  if (!flowerStart) flowerStart = ts;
-  const elapsed = ts - flowerStart;
-  flowerProgress = Math.min(1, elapsed / BLOOM_DURATION);
-  swayTime = elapsed;
-
-  const sway = flowerProgress === 1
-    ? Math.sin(swayTime / 1000 * 0.7) * 0.022 : 0;
-
-  ctx.clearRect(0, 0, fc.width, fc.height);
-  ctx.save();
-  ctx.translate(CX, STEM_BOT);
-  ctx.rotate(sway);
-  ctx.translate(-CX, -STEM_BOT);
-
-  drawStem(easeOut(Math.min(1, flowerProgress / 0.35)));
-
-  for (let i = 0; i < NUM_PETALS; i++) {
-    const angle = (i / NUM_PETALS) * Math.PI * 2;
-    const start = 0.3 + (i / NUM_PETALS) * 0.35;
-    const pp = Math.max(0, Math.min(1, (flowerProgress - start) / 0.25));
-    drawPetal(angle, pp);
-  }
-
-  drawCenter(Math.max(0, Math.min(1, (flowerProgress - 0.85) / 0.15)));
-  ctx.restore();
-}
-
-// ─── BACKGROUND FALLING PETALS ───────────────────────────────────
 const bg = document.getElementById('bg');
 const bx = bg.getContext('2d');
+function resizeBg() { bg.width = innerWidth; bg.height = innerHeight; }
+resizeBg(); window.addEventListener('resize', resizeBg);
 
-function resizeBg() {
-  bg.width = window.innerWidth;
-  bg.height = window.innerHeight;
-}
-resizeBg();
-window.addEventListener('resize', resizeBg);
-
-const PETAL_COUNT = 38;
-const petals = [];
-
-function randomPetal() {
-  return {
-    x: Math.random() * window.innerWidth,
-    y: -Math.random() * window.innerHeight, // start above screen
-    len: 10 + Math.random() * 14,
-    wid: 5 + Math.random() * 6,
-    speed: 0.4 + Math.random() * 0.7,
-    drift: (Math.random() - 0.5) * 0.4, // horizontal drift speed
-    rot: Math.random() * Math.PI * 2,
-    rotSpd: (Math.random() - 0.5) * 0.025,
-    alpha: 0.08 + Math.random() * 0.22,
-    swing: Math.random() * Math.PI * 2, // phase for pendulum swing
-    swingAmp: 0.3 + Math.random() * 0.5,
-  };
-}
-
-for (let i = 0; i < PETAL_COUNT; i++) {
-  const p = randomPetal();
-  p.y = Math.random() * window.innerHeight; // scatter initial positions
-  petals.push(p);
-}
+const BP = Array.from({length:45}, () => ({
+  x: Math.random()*innerWidth, y: Math.random()*innerHeight,
+  len:8+Math.random()*14, wid:4+Math.random()*6,
+  speed:.3+Math.random()*.6, drift:(Math.random()-.5)*.3,
+  rot:Math.random()*Math.PI*2, rotSpd:(Math.random()-.5)*.02,
+  alpha:.05+Math.random()*.18, swing:Math.random()*Math.PI*2,
+  swingAmp:.2+Math.random()*.5,
+}));
 
 function drawBgPetal(p) {
-  bx.save();
-  bx.translate(p.x, p.y);
-  bx.rotate(p.rot);
+  bx.save(); bx.translate(p.x,p.y); bx.rotate(p.rot);
   bx.globalAlpha = p.alpha;
-
-  bx.beginPath();
-  bx.ellipse(0, 0, p.wid * 0.5, p.len * 0.5, 0, 0, Math.PI * 2);
-
-  const grad = bx.createLinearGradient(0, -p.len * 0.5, 0, p.len * 0.5);
-  grad.addColorStop(0, '#8a6a20');
-  grad.addColorStop(0.5, '#c8a84b');
-  grad.addColorStop(1, '#e8cc80');
-  bx.fillStyle = grad;
-  bx.fill();
-
-  bx.restore();
+  bx.beginPath(); bx.ellipse(0,0,p.wid*.5,p.len*.5,0,0,Math.PI*2);
+  const g = bx.createLinearGradient(0,-p.len*.5,0,p.len*.5);
+  g.addColorStop(0,'#8a6a20'); g.addColorStop(.5,'#c8a84b'); g.addColorStop(1,'#e8cc80');
+  bx.fillStyle=g; bx.fill(); bx.restore();
 }
 
-function updateBgPetals(ts) {
-  bx.clearRect(0, 0, bg.width, bg.height);
 
-  for (const p of petals) {
-    // Pendulum side sway
-    p.swing += 0.012;
-    p.x += Math.sin(p.swing) * p.swingAmp + p.drift;
-    p.y += p.speed;
-    p.rot += p.rotSpd;
+const bc = document.getElementById('bouquet');
+const ctx = bc.getContext('2d');
 
-    // Reset when off screen
-    if (p.y > bg.height + 20) {
-      Object.assign(p, randomPetal());
-      p.y = -20;
-    }
+const GOLD='#c8a84b', GOLD_L='#f0d878', GOLD_D='#7a5a18';
+const STEM_C='#2a3a10', LEAF_C='#304a12';
+const BLOOM_DUR = 2800;
+let startT = null;
 
+
+const flowers = [
+
+  { cx:240, cy:80,  bx:240, by:400, petals:12, pLen:52, pWid:17, delay:0,    sway:0.018, swayPhase:0 },
+
+  { cx:150, cy:110, bx:200, by:400, petals:10, pLen:44, pWid:15, delay:200,  sway:0.022, swayPhase:1.2 },
+  { cx: 80, cy:155, bx:160, by:400, petals:10, pLen:40, pWid:14, delay:350,  sway:0.025, swayPhase:2.1 },
+  { cx: 30, cy:200, bx:130, by:400, petals: 8, pLen:34, pWid:12, delay:500,  sway:0.020, swayPhase:0.7 },
+
+  { cx:330, cy:110, bx:280, by:400, petals:10, pLen:44, pWid:15, delay:200,  sway:0.022, swayPhase:1.8 },
+  { cx:400, cy:155, bx:320, by:400, petals:10, pLen:40, pWid:14, delay:350,  sway:0.025, swayPhase:2.8 },
+  { cx:450, cy:200, bx:350, by:400, petals: 8, pLen:34, pWid:12, delay:500,  sway:0.020, swayPhase:1.5 },
+
+  { cx:185, cy:130, bx:220, by:400, petals: 8, pLen:36, pWid:12, delay:150,  sway:0.015, swayPhase:3.0 },
+  { cx:295, cy:130, bx:260, by:400, petals: 8, pLen:36, pWid:12, delay:150,  sway:0.015, swayPhase:0.3 },
+];
+
+function easeOut(t){ return 1-Math.pow(1-t,3); }
+function easeIn(t){ return t*t*t; }
+
+function flowerProgress(elapsed, f) {
+  const e = Math.max(0, elapsed - f.delay);
+  return Math.min(1, e / (BLOOM_DUR * 0.7));
+}
+
+function drawStem(f, p, sway) {
+  if(p<=0) return;
+  
+  const topY = f.cy + (f.by - f.cy)*(1-easeOut(p));
+  ctx.save();
+
+  ctx.translate(f.bx, f.by);
+  ctx.rotate(sway);
+  ctx.translate(-f.bx, -f.by);
+
+  ctx.beginPath();
+  ctx.moveTo(f.bx, f.by);
+
+  const cpx = f.bx + (f.cx - f.bx)*0.3;
+  const cpy = f.by - (f.by - f.cy)*0.5;
+  ctx.quadraticCurveTo(cpx, cpy, f.cx, Math.max(f.cy, topY));
+  ctx.strokeStyle = STEM_C;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  
+  if(p > 0.5) {
+    const lp = Math.min(1,(p-0.5)/0.3);
+    const midX = f.bx + (f.cx-f.bx)*0.45;
+    const midY = f.by + (f.cy-f.by)*0.45;
+
+    ctx.save(); ctx.translate(midX, midY);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(-22*lp,-8*lp,-30*lp,-20*lp,-14*lp,-26*lp);
+    ctx.bezierCurveTo(-6*lp,-16*lp,-2*lp,-8*lp,0,0);
+    ctx.fillStyle=LEAF_C; ctx.globalAlpha=lp*0.8; ctx.fill();
+    ctx.restore();
+
+    ctx.save(); ctx.translate(midX+10*lp, midY-15*lp);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(22*lp,-6*lp,32*lp,-18*lp,16*lp,-24*lp);
+    ctx.bezierCurveTo(8*lp,-14*lp,2*lp,-6*lp,0,0);
+    ctx.fillStyle=LEAF_C; ctx.globalAlpha=lp*0.8; ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+function drawFlowerHead(f, p, sway, elapsed) {
+  if(p <= 0) return;
+  const pp = easeOut(p);
+
+  ctx.save();
+  ctx.translate(f.cx, f.cy);
+
+  const swayOffset = Math.sin(elapsed/1000*0.65 + f.swayPhase) * f.sway * pp;
+  ctx.rotate(swayOffset);
+
+
+  for(let i=0; i<f.petals; i++){
+    const angle = (i/f.petals)*Math.PI*2;
+    const petalP = Math.max(0, Math.min(1,
+      (p - (i/f.petals)*0.35) / 0.45
+    ));
+    if(petalP<=0) continue;
+    const ep = easeOut(petalP);
+    const len = f.pLen * ep;
+    const wid = f.pWid * ep;
+
+    ctx.save();
+    ctx.rotate(angle);
+    ctx.beginPath();
+    ctx.ellipse(0, -len*0.54, wid*0.5, len*0.5, 0, 0, Math.PI*2);
+
+    const g = ctx.createLinearGradient(0,0,0,-len);
+    g.addColorStop(0, GOLD_D);
+    g.addColorStop(0.45, GOLD);
+    g.addColorStop(1, GOLD_L);
+    ctx.fillStyle = g;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120,90,20,0.4)';
+    ctx.lineWidth = 0.4;
+    ctx.stroke();
+
+    // vein
+    ctx.beginPath();
+    ctx.moveTo(0,0); ctx.lineTo(0,-len*.88);
+    ctx.strokeStyle='rgba(200,168,75,0.18)';
+    ctx.lineWidth=0.5; ctx.stroke();
+    ctx.restore();
+  }
+
+
+  const cp = Math.max(0, Math.min(1,(p-0.8)/0.2));
+  if(cp>0){
+    const cr = 13*easeOut(cp);
+    ctx.beginPath(); ctx.arc(0,0,cr,0,Math.PI*2);
+    const cg = ctx.createRadialGradient(0,0,0,0,0,cr);
+    cg.addColorStop(0,'#3a2808'); cg.addColorStop(.6,'#1c1204'); cg.addColorStop(1,'#0c0b0a');
+    ctx.fillStyle=cg; ctx.fill();
+    ctx.strokeStyle=GOLD; ctx.lineWidth=0.7; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,7*easeOut(cp),0,Math.PI*2);
+    ctx.strokeStyle=GOLD_D; ctx.lineWidth=0.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,2*easeOut(cp),0,Math.PI*2);
+    ctx.fillStyle=GOLD; ctx.globalAlpha=0.55; ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+
+function drawWrap(p) {
+  if(p<0.1) return;
+  const wp = Math.min(1,(p-0.1)/0.4);
+  const ep = easeOut(wp);
+  ctx.save();
+  ctx.globalAlpha = ep;
+
+
+  ctx.beginPath();
+  ctx.moveTo(175,390); ctx.lineTo(305,390);
+  ctx.lineTo(320,420); ctx.lineTo(160,420);
+  ctx.closePath();
+  const wg = ctx.createLinearGradient(175,390,305,420);
+  wg.addColorStop(0,'#1a1408'); wg.addColorStop(.5,'#2a2010'); wg.addColorStop(1,'#1a1408');
+  ctx.fillStyle=wg; ctx.fill();
+  ctx.strokeStyle='rgba(200,168,75,0.2)'; ctx.lineWidth=0.8; ctx.stroke();
+
+
+  ctx.beginPath();
+  ctx.moveTo(230,390); ctx.lineTo(220,420);
+  ctx.moveTo(250,390); ctx.lineTo(260,420);
+  ctx.strokeStyle='rgba(200,168,75,0.12)'; ctx.lineWidth=0.6; ctx.stroke();
+
+
+  ctx.beginPath();
+  ctx.ellipse(220,388,16*ep,8*ep,-.4,0,Math.PI*2);
+  ctx.ellipse(260,388,16*ep,8*ep,.4,0,Math.PI*2);
+  ctx.fillStyle='#1e1810'; ctx.fill();
+  ctx.strokeStyle='rgba(200,168,75,0.25)'; ctx.lineWidth=0.7; ctx.stroke();
+
+  ctx.beginPath(); ctx.ellipse(240,388,6*ep,5*ep,0,0,Math.PI*2);
+  ctx.fillStyle='#2a2218'; ctx.fill();
+  ctx.strokeStyle='rgba(200,168,75,0.3)'; ctx.lineWidth=0.6; ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawAll(ts) {
+  if(!startT) startT = ts;
+  const elapsed = ts - startT;
+  const masterP = Math.min(1, elapsed / (BLOOM_DUR + 500));
+
+  ctx.clearRect(0,0,bc.width,bc.height);
+
+ 
+  for(const f of flowers){
+    const p = flowerProgress(elapsed, f);
+    const sway = p>=1 ? Math.sin(elapsed/1000*0.65+f.swayPhase)*f.sway : 0;
+    drawStem(f, p, sway);
+  }
+
+
+  drawWrap(masterP);
+
+
+  for(const f of flowers){
+    const p = flowerProgress(elapsed, f);
+    drawFlowerHead(f, p, 0, elapsed);
+  }
+}
+
+
+function updateBg() {
+  bx.clearRect(0,0,bg.width,bg.height);
+  for(const p of BP){
+    p.swing+=0.01; p.x+=Math.sin(p.swing)*p.swingAmp+p.drift;
+    p.y+=p.speed; p.rot+=p.rotSpd;
+    if(p.y>bg.height+20){ p.y=-20; p.x=Math.random()*bg.width; }
     drawBgPetal(p);
   }
 }
 
-// ─── MAIN LOOP ────────────────────────────────────────────────────
-function loop(ts) {
-  drawFlower(ts);
-  updateBgPetals(ts);
+
+function loop(ts){
+  drawAll(ts);
+  updateBg();
   requestAnimationFrame(loop);
 }
-
 requestAnimationFrame(loop);
 </script>
 </body>
